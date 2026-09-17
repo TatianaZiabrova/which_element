@@ -1,0 +1,15 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>Проверка десяти PNG</title>
+<style>body{font:16px Arial;margin:24px;background:#eee}#main,#notice{display:none}#cards{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}img{width:100%}figure{margin:0}figcaption{padding:8px}h1{font-size:24px}</style>
+<h1>Проверка карточек 1080 × 1350</h1><p id="status">Генерируются…</p><div id="main"></div><div id="notice"></div><div id="cards"></div>
+<script type="module">
+import {makeCard} from '../app.js';
+import {elements} from '../data.js';
+let passed=0;let failed=0;
+for(const key of Object.keys(elements)){
+  const figure=document.createElement('figure');const caption=document.createElement('figcaption');caption.textContent=key;figure.append(caption);
+  try{const blob=await makeCard(key);const img=new Image();img.src=URL.createObjectURL(blob);await img.decode();if(img.naturalWidth!==1080||img.naturalHeight!==1350)throw Error('Размер');img.alt=elements[key].name;figure.append(img);caption.textContent+=' — OK';passed++;}
+  catch(error){caption.textContent+=' — ОШИБКА: '+error.message;failed++;}
+  document.querySelector('#cards').append(figure);
+}
+document.querySelector('#status').textContent=`Успешно: ${passed}. Ошибок: ${failed}.`;
+</script></html>
