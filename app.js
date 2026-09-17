@@ -1,4 +1,5 @@
 import {elements, questions, getResult} from './data.js';
+import {visit, count} from './analytics.js';
 
 const main = document.querySelector('#main');
 const notice = document.querySelector('#notice');
@@ -19,6 +20,7 @@ function intro() {
 }
 function start() { answers = Array(questions.length).fill(null); current = 0; result = null; cachedCard = null; renderQuestion(); }
 function renderQuestion() {
+  count('step-' + String(current+1).padStart(2,'0'), `Вопрос ${current+1} из ${questions.length}`);
   const question = questions[current];
   main.innerHTML = `<section class="quiz enter"><div class="quiz-top"><span>Твоё настроение сегодня</span><strong>${current+1} / ${questions.length}</strong></div><div class="progress" role="progressbar" aria-label="Пройдено вопросов" aria-valuemin="0" aria-valuemax="8" aria-valuenow="${current}">${questions.map((_,i) => `<span class="${i<=current?'done':''}"></span>`).join('')}</div><p class="question-number">Вопрос ${String(current+1).padStart(2,'0')}</p><h1 id="question-title" tabindex="-1">${question.title}</h1><fieldset class="options" aria-labelledby="question-title">${question.options.map((option,i) => `<label class="option"><input type="radio" name="answer" value="${i}" ${answers[current]===i?'checked':''}><span class="letter" aria-hidden="true">${letters[i]}</span><span>${option.text}</span></label>`).join('')}</fieldset><div class="quiz-actions"><button class="back" id="back">← ${current===0?'К началу':'Назад'}</button><button class="primary" id="next" ${answers[current]===null?'disabled':''}>${current===7?'Мой элемент':'Дальше'} <span aria-hidden="true">→</span></button></div><p class="helper">Здесь нет правильных ответов. Выбирай, как чувствуешь сегодня.</p></section>`;
   main.querySelectorAll('input').forEach(input => input.onchange = () => { answers[current] = Number(input.value); document.querySelector('#next').disabled = false; });
@@ -29,6 +31,8 @@ function renderQuestion() {
 function advance() { if(answers[current]===null) return; if(current<7) {current++;renderQuestion();} else {result=getResult(answers);renderResult();} }
 function renderResult() {
   const e = elements[result];
+  count('finish', 'Дошёл до конца');
+  count('element-' + result, e.name);
   main.innerHTML = `<section class="result-layout enter"><article class="result-card" style="--element-color:${e.color}" aria-label="Твой элемент — ${e.name}"><div class="result-top"><span>Мой элемент сегодня</span><span>${e.number}</span></div><div class="result-element"><span class="result-symbol">${result}</span><span class="result-name">${e.name}</span></div><h2>${e.title}</h2><p class="result-description">${e.text}</p><div class="result-sign"><span>Химия с Татьяной</span><span>@schoolusu</span></div></article><div class="result-aside"><div class="eyebrow">Реакция прошла успешно</div><h1 tabindex="-1">Сегодня у тебя<br>вот такая химия.</h1><p class="lead">Узнаёшь себя? Сохрани карточку<br>и сравни настроение с друзьями.</p><div class="tip"><div class="tip-label">Маленький совет на сегодня</div><p>${e.tip}</p></div><div class="result-actions"><button class="primary" id="save">Сохранить карточку <span aria-hidden="true">↓</span></button><button class="secondary" id="share">Поделиться с друзьями <span aria-hidden="true">↗</span></button></div><div class="result-links"><button class="text-button" id="again">Пройти ещё раз</button><a href="https://t.me/schoolusu" target="_blank" rel="noopener noreferrer">В канал Татьяны ↗</a></div><p class="small-note">Это настроение, а не ярлык. Завтра ты можешь быть совсем другим элементом.</p></div></section>`;
   document.querySelector('#save').onclick = saveCard;
   document.querySelector('#share').onclick = shareCard;
@@ -86,6 +90,7 @@ async function shareCard() {
 }
 
 intro();
+visit();
 
 // Дополнительный доступ к тому же тесту в браузерах с поддержкой WebMCP.
 if(document.modelContext?.registerTool){
